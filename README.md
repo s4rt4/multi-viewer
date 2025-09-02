@@ -75,7 +75,8 @@ A simple, interactive web dashboard to view and manage different file types: **C
    git clone https://github.com/s4rt4/multi-viewer.git
 
 
-   **Screenshot:**
+
 ![Demo](https://s4rt4.github.io/muti-viewer)
+
 
 
