@@ -1,9 +1,5 @@
 # Multi-Viewer Dashboard
 
-![GitHub repo size](https://img.shields.io/github/repo-size/username/multi-viewer-dashboard) 
-![GitHub last commit](https://img.shields.io/github/last-commit/username/multi-viewer-dashboard) 
-![GitHub license](https://img.shields.io/github/license/username/multi-viewer-dashboard)
-
 A simple, interactive web dashboard to view and manage different file types: **CSV, JSON, Markdown, Log, and Excel**. Each viewer is built in a separate HTML file and includes useful features for analyzing and exporting data.
 
 ---
@@ -76,4 +72,10 @@ A simple, interactive web dashboard to view and manage different file types: **C
 
 1. Clone or download the repository:
    ```bash
-   git clone https://github.com/username/multi-viewer-dashboard.git
+   git clone https://github.com/s4rt4/multi-viewer.git
+
+
+   **Screenshot:**
+![Demo](https://s4rt4.github.io/muti-viewer)
+
+
