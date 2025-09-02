@@ -1,6 +1,14 @@
 # Multi-Viewer Dashboard
 
+
 A simple, interactive web dashboard to view and manage different file types: **CSV, JSON, Markdown, Log, and Excel**. Each viewer is built in a separate HTML file and includes useful features for analyzing and exporting data.
+
+---
+
+## Demo
+
+Try the live demo here:  
+[![Demo](https://s4rt4.github.io/muti-viewer)](https://s4rt4.github.io/muti-viewer)
 
 ---
 
@@ -72,11 +80,4 @@ A simple, interactive web dashboard to view and manage different file types: **C
 
 1. Clone or download the repository:
    ```bash
-   git clone https://github.com/s4rt4/multi-viewer.git
-
-
-
-![Demo](https://s4rt4.github.io/muti-viewer)
-
-
-
+   git clone https://github.com/username/multi-viewer-dashboard.git
