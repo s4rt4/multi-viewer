@@ -8,7 +8,7 @@ A simple, interactive web dashboard to view and manage different file types: **C
 ## Demo
 
 Try the live demo here:  
-[![Demo](https://s4rt4.github.io/muti-viewer)](https://s4rt4.github.io/muti-viewer)
+[![Demo](https://s4rt4.github.io/muti-viewer)](https://s4rt4.github.io/multi-viewer)
 
 ---
 
@@ -81,3 +81,4 @@ Try the live demo here:
 1. Clone or download the repository:
    ```bash
    git clone https://github.com/username/multi-viewer-dashboard.git
+
