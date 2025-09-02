@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Log Viewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<style>
+body { font-family: monospace; background:#f5f5f5; margin:20px; color:#333; }
+h1 { text-align:center; margin-bottom:20px; }
+.upload-container { text-align:center; margin-bottom:15px; }
+.custom-upload { display:inline-flex; align-items:center; gap:10px; background:#007bff; color:white; padding:12px 20px; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s; }
+.custom-upload:hover { background:#0056b3; transform: scale(1.05); }
+.custom-upload input { display:none; }
+#controls { text-align:center; margin-bottom:10px; }
+#controls input, #controls select, #controls button { margin:5px; padding:6px 12px; border-radius:6px; border:none; cursor:pointer; transition:0.2s; }
+#controls input { width:200px; border:1px solid #ccc; }
+#controls button { background:#17a2b8; color:white; }
+#controls button:hover { background:#138496; }
+#logContainer { background:white; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); max-width:1000px; margin:auto; max-height:600px; overflow:auto; white-space:pre-wrap; word-wrap:break-word; font-size:14px; }
+.log-line { padding:2px 4px; }
+.error { color:red; font-weight:bold; }
+.warn { color:orange; font-weight:bold; }
+.info { color:blue; }
+.pagination { text-align:center; margin-top:10px; }
+.pagination button { margin:0 3px; padding:4px 8px; border:none; border-radius:4px; cursor:pointer; background:#17a2b8; color:white; }
+.pagination button.active { background:#138496; }
+</style>
+</head>
+<body>
+<h1>📄 Log Viewer</h1>
+
+<div class="upload-container">
+<label class="custom-upload"><i class="fas fa-upload"></i> Choose Log File
+<input type="file" id="fileInput" accept=".log,.txt"></label>
+</div>
+
+<div id="controls">
+<input type="text" id="searchBox" placeholder="Search logs">
+<button id="searchBtn">Search</button>
+<button id="printBtn">Print</button>
+<button id="pdfBtn">Export PDF</button>
+<select id="rowsPerPage">
+  <option value="50">50 rows/page</option>
+  <option value="100">100 rows/page</option>
+  <option value="200">200 rows/page</option>
+  <option value="500">500 rows/page</option>
+</select>
+<select id="levelFilter">
+  <option value="ALL">All Levels</option>
+  <option value="ERROR">ERROR</option>
+  <option value="WARN">WARN</option>
+  <option value="INFO">INFO</option>
+</select>
+</div>
+
+<div id="logContainer">Upload a log file to see content here.</div>
+<div class="pagination" id="pagination"></div>
+
+<script>
+let logData = [];
+let currentPage = 1;
+let rowsPerPage = 50;
+
+// Load log file
+document.getElementById("fileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    logData = ev.target.result.split(/\r?\n/);
+    currentPage = 1;
+    renderLog();
+  };
+  reader.readAsText(file);
+});
+
+function renderLog(filteredData){
+  filteredData = filteredData || logData;
+  rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+  const start = (currentPage-1)*rowsPerPage;
+  const end = start+rowsPerPage;
+  const pageData = filteredData.slice(start,end);
+  if(pageData.length===0){ document.getElementById("logContainer").innerHTML="No logs"; return; }
+
+  let html = "";
+  pageData.forEach(line=>{
+    let cls = "";
+    if(line.includes("ERROR")) cls="error";
+    else if(line.includes("WARN")) cls="warn";
+    else if(line.includes("INFO")) cls="info";
+    html += `<div class="log-line ${cls}" title="Click to copy">${line}</div>`;
+  });
+  document.getElementById("logContainer").innerHTML = html;
+  document.querySelectorAll(".log-line").forEach(el=>{
+    el.addEventListener("click", ()=>navigator.clipboard.writeText(el.textContent));
+  });
+  renderPagination(filteredData);
+}
+
+// Pagination
+function renderPagination(filteredData){
+  filteredData = filteredData || logData;
+  const totalPages = Math.ceil(filteredData.length/rowsPerPage);
+  let html="";
+  for(let i=1;i<=totalPages;i++){
+    html+=`<button class="${i===currentPage?'active':''}" onclick="gotoPage(${i})">${i}</button>`;
+  }
+  document.getElementById("pagination").innerHTML=html;
+}
+
+function gotoPage(page){ currentPage=page; applyFilters(); }
+
+// Rows per page change
+document.getElementById("rowsPerPage").addEventListener("change", function(){ currentPage=1; applyFilters(); });
+document.getElementById("levelFilter").addEventListener("change", function(){ currentPage=1; applyFilters(); });
+
+// Search & Level filter
+document.getElementById("searchBtn").addEventListener("click", function(){ currentPage=1; applyFilters(); });
+
+function applyFilters(){
+  let term = document.getElementById("searchBox").value.trim().toLowerCase();
+  let level = document.getElementById("levelFilter").value;
+  let filtered = logData.filter(line=>{
+    let match = (!term || line.toLowerCase().includes(term));
+    let levelMatch = (level==="ALL" || line.includes(level));
+    return match && levelMatch;
+  });
+  renderLog(filtered);
+}
+
+// Print
+document.getElementById("printBtn").addEventListener("click", function(){
+  const w = window.open();
+  w.document.write('<html><head><title>Print Logs</title></head><body>'+document.getElementById("logContainer").innerHTML+'</body></html>');
+  w.document.close();
+  w.print();
+});
+
+// Export PDF
+document.getElementById("pdfBtn").addEventListener("click", function(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 10;
+  logData.forEach((line, index)=>{
+    if(index>0 && index % 50 ===0) doc.addPage(), y=10;
+    let color = [0,0,0];
+    if(line.includes("ERROR")) color=[255,0,0];
+    else if(line.includes("WARN")) color=[255,165,0];
+    else if(line.includes("INFO")) color=[0,0,255];
+    doc.setTextColor(...color);
+    doc.text(10, y, line);
+    y +=7;
+  });
+  doc.save("logs.pdf");
+});
+</script>
+</body>
+</html>

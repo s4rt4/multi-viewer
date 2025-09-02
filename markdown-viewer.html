@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Markdown Viewer Stable</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+body { font-family: Arial,sans-serif; margin:20px; background:#f5f5f5; color:#333; }
+h1 { text-align:center; margin-bottom:20px; }
+.upload-container { text-align:center; margin-bottom: 15px; }
+.custom-upload { display:inline-flex; align-items:center; gap:10px; background:#007bff; color:white; padding:12px 20px; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s; }
+.custom-upload:hover { background:#0056b3; transform: scale(1.05); }
+.custom-upload input { display:none; }
+#controls { text-align:center; margin-bottom:15px; }
+#controls button { margin:5px; padding:8px 14px; border-radius:6px; border:none; background:#17a2b8; color:white; cursor:pointer; transition:0.2s; }
+#controls button:hover { background:#138496; }
+#searchBox { padding:6px; width:200px; margin-right:10px; border-radius:4px; border:1px solid #ccc; }
+#preview { background:white; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); max-width:800px; margin:auto; line-height:1.6; }
+pre code { display:block; background:#2d2d2d; color:#f8f8f2; padding:12px; border-radius:6px; overflow-x:auto; font-family:"Courier New", monospace; font-size:14px; }
+code { background:#eee; padding:2px 5px; border-radius:4px; font-family:"Courier New", monospace; }
+.highlight { background: yellow; }
+</style>
+</head>
+<body>
+<h1>Markdown Viewer</h1>
+
+<div class="upload-container">
+<label class="custom-upload"><i class="fas fa-upload"></i> Choose Markdown File
+<input type="file" id="fileInput" accept=".md,.markdown,.txt"></label>
+</div>
+
+<div id="controls">
+<input type="text" id="searchBox" placeholder="Search text">
+<button id="searchBtn">Search</button>
+<button id="printBtn">Print</button>
+<button id="pdfBtn">Export PDF</button>
+<button id="odtBtn">Export ODT</button>
+</div>
+
+<div id="preview">Upload a markdown file to see preview here.</div>
+
+<script>
+let markdownContent = "";
+
+// Load Markdown file
+document.getElementById("fileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    markdownContent = ev.target.result;
+    document.getElementById("preview").innerHTML = marked.parse(markdownContent);
+  };
+  reader.readAsText(file);
+});
+
+// Search
+document.getElementById("searchBtn").addEventListener("click", function(){
+  const term = document.getElementById("searchBox").value.trim();
+  let html = marked.parse(markdownContent);
+  if(term){
+    const regex = new RegExp(term,"gi");
+    html = html.replace(regex, match=>`<span class="highlight">${match}</span>`);
+  }
+  document.getElementById("preview").innerHTML = html;
+});
+
+// Print
+document.getElementById("printBtn").addEventListener("click", function(){
+  const w = window.open();
+  w.document.write('<html><head><title>Print</title></head><body>'+document.getElementById("preview").innerHTML+'</body></html>');
+  w.document.close();
+  w.print();
+});
+
+// Export PDF (full preview, multiple pages if panjang)
+document.getElementById("pdfBtn").addEventListener("click", async function(){
+  const { jsPDF } = window.jspdf;
+  const preview = document.getElementById("preview");
+  const canvas = await html2canvas(preview, { scale: 2 });
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF('p','pt','a4');
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  let position = 0;
+  let pageHeight = pdf.internal.pageSize.getHeight();
+  while(position < pdfHeight){
+    pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, pdfHeight);
+    position += pageHeight;
+    if(position < pdfHeight) pdf.addPage();
+  }
+  pdf.save('markdown.pdf');
+});
+
+// Export ODT (plain text)
+document.getElementById("odtBtn").addEventListener("click", function(){
+  const blob = new Blob([markdownContent], {type:"application/vnd.oasis.opendocument.text"});
+  saveAs(blob,"markdown.odt");
+});
+</script>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Viewer Dashboard</title>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg-color: #f5f5f5;
+  --card-bg: white;
+  --text-color: #333;
+  --primary: #007bff;
+  --card-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+body {
+  font-family: Arial,sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  margin:0;
+  padding:0;
+  transition: background 0.3s, color 0.3s;
+}
+h1 { text-align:center; padding:20px 0; }
+.toggle-theme { position: fixed; top: 20px; right: 20px; padding:10px 15px; border:none; border-radius:6px; background:var(--primary); color:white; cursor:pointer; transition:0.3s; }
+.toggle-theme:hover { background:#0056b3; }
+.dashboard {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap:20px;
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+.card {
+  background: var(--card-bg);
+  border-radius:12px;
+  padding:30px 20px;
+  text-align:center;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor:pointer;
+  text-decoration:none;
+  color: inherit;
+  position: relative;
+}
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+}
+.card i { font-size:48px; margin-bottom:15px; color: var(--primary); transition: transform 0.3s; }
+.card:hover i { transform: scale(1.2); }
+.card h3 { margin:10px 0 0 0; font-size:18px; }
+.tooltip {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding:5px 10px;
+  border-radius:6px;
+  font-size:12px;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+.card:hover .tooltip { opacity:1; }
+.dark {
+  --bg-color: #1e1e1e;
+  --card-bg: #2b2b2b;
+  --text-color: #f5f5f5;
+  --primary: #4da6ff;
+  --card-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+</style>
+</head>
+<body>
+
+<button class="toggle-theme">Toggle Dark Mode</button>
+
+<h1>📂 Viewer Dashboard</h1>
+<div class="dashboard">
+  <a class="card" href="csv-viewer.html" target="_blank">
+    <i class="fas fa-file-csv"></i>
+    <h3>CSV Viewer</h3>
+    <div class="tooltip">View CSV files neatly</div>
+  </a>
+  <a class="card" href="json-viewer.html" target="_blank">
+    <i class="fas fa-code"></i>
+    <h3>JSON Viewer</h3>
+    <div class="tooltip">View JSON with search & copy</div>
+  </a>
+  <a class="card" href="markdown-viewer.html" target="_blank">
+    <i class="fas fa-file-alt"></i>
+    <h3>Markdown Viewer</h3>
+    <div class="tooltip">Render Markdown files</div>
+  </a>
+  <a class="card" href="log-viewer.html" target="_blank">
+    <i class="fas fa-file-signature"></i>
+    <h3>Log Viewer</h3>
+    <div class="tooltip">View logs with search & highlight</div>
+  </a>
+  <a class="card" href="excel-viewer.html" target="_blank">
+    <i class="fas fa-file-excel"></i>
+    <h3>Excel Viewer</h3>
+    <div class="tooltip">View Excel files with pagination</div>
+  </a>
+</div>
+
+<script>
+// Toggle dark mode
+const toggleBtn = document.querySelector('.toggle-theme');
+toggleBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+});
+</script>
+
+</body>
+</html>

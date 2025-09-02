@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JSON Viewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<style>
+body { font-family: monospace; background:#f5f5f5; margin:20px; color:#333; }
+h1 { text-align:center; margin-bottom:20px; }
+.upload-container { text-align:center; margin-bottom:15px; }
+.custom-upload { display:inline-flex; align-items:center; gap:10px; background:#007bff; color:white; padding:12px 20px; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s; }
+.custom-upload:hover { background:#0056b3; transform: scale(1.05); }
+.custom-upload input { display:none; }
+#controls { text-align:center; margin-bottom:10px; }
+#controls input, #controls select, #controls button { margin:5px; padding:6px 12px; border-radius:6px; border:none; cursor:pointer; transition:0.2s; }
+#controls input { width:200px; border:1px solid #ccc; }
+#controls button { background:#17a2b8; color:white; }
+#controls button:hover { background:#138496; }
+#jsonContainer { background:white; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); max-width:1000px; margin:auto; max-height:600px; overflow:auto; white-space:pre-wrap; word-wrap:break-word; font-size:14px; }
+.key { color: brown; font-weight:bold; }
+.string { color: green; }
+.number { color: blue; }
+.boolean { color: orange; }
+.null { color: red; }
+.json-line { cursor:pointer; padding:2px 4px; }
+.pagination { text-align:center; margin-top:10px; }
+.pagination button { margin:0 3px; padding:4px 8px; border:none; border-radius:4px; cursor:pointer; background:#17a2b8; color:white; }
+.pagination button.active { background:#138496; }
+</style>
+</head>
+<body>
+<h1>📦 JSON Viewer</h1>
+
+<div class="upload-container">
+<label class="custom-upload"><i class="fas fa-upload"></i> Choose JSON File
+<input type="file" id="fileInput" accept=".json"></label>
+</div>
+
+<div id="controls">
+<input type="text" id="searchBox" placeholder="Search key/value">
+<button id="searchBtn">Search</button>
+<button id="printBtn">Print</button>
+<button id="pdfBtn">Export PDF</button>
+<select id="rowsPerPage">
+  <option value="50">50 rows/page</option>
+  <option value="100">100 rows/page</option>
+  <option value="200">200 rows/page</option>
+  <option value="500">500 rows/page</option>
+</select>
+</div>
+
+<div id="jsonContainer">Upload a JSON file to see content here.</div>
+<div class="pagination" id="pagination"></div>
+
+<script>
+let jsonData = [];
+let currentPage = 1;
+let rowsPerPage = 50;
+let flatData = [];
+
+// Flatten JSON to array of key-path and value for table
+function flattenJSON(obj, prefix=''){
+  let result = [];
+  if(Array.isArray(obj)){
+    obj.forEach((v,i)=>{
+      result = result.concat(flattenJSON(v,prefix+'['+i+']'));
+    });
+  } else if(obj && typeof obj === 'object'){
+    Object.keys(obj).forEach(k=>{
+      result = result.concat(flattenJSON(obj[k], prefix?prefix+'.'+k:k));
+    });
+  } else {
+    result.push({key: prefix, value: obj});
+  }
+  return result;
+}
+
+// Render JSON table
+function renderTable(data){
+  rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+  const start = (currentPage-1)*rowsPerPage;
+  const end = start+rowsPerPage;
+  const pageData = data.slice(start,end);
+  if(pageData.length===0){ document.getElementById("jsonContainer").innerHTML="No data"; return; }
+
+  let html="";
+  pageData.forEach(line=>{
+    let typeClass = 'string';
+    if(line.value===null) typeClass='null';
+    else if(typeof line.value==='number') typeClass='number';
+    else if(typeof line.value==='boolean') typeClass='boolean';
+    html += `<div class="json-line"><span class="key">${line.key}</span>: <span class="${typeClass}">${line.value}</span></div>`;
+  });
+  document.getElementById("jsonContainer").innerHTML=html;
+
+  document.querySelectorAll(".json-line").forEach(el=>{
+    el.addEventListener("click", ()=>navigator.clipboard.writeText(el.textContent));
+  });
+
+  renderPagination(data);
+}
+
+// Pagination
+function renderPagination(data){
+  const totalPages = Math.ceil(data.length/rowsPerPage);
+  let html="";
+  for(let i=1;i<=totalPages;i++){
+    html+=`<button class="${i===currentPage?'active':''}" onclick="gotoPage(${i})">${i}</button>`;
+  }
+  document.getElementById("pagination").innerHTML=html;
+}
+function gotoPage(page){ currentPage=page; applySearch(); }
+
+// Load JSON file
+document.getElementById("fileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const obj = JSON.parse(ev.target.result);
+      jsonData = flattenJSON(obj);
+      currentPage=1;
+      renderTable(jsonData);
+    }catch(err){
+      alert("Invalid JSON file");
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Search
+document.getElementById("searchBtn").addEventListener("click", function(){ currentPage=1; applySearch(); });
+function applySearch(){
+  let term = document.getElementById("searchBox").value.trim().toLowerCase();
+  let filtered = jsonData.filter(line=>{
+    return !term || (line.key.toLowerCase().includes(term) || String(line.value).toLowerCase().includes(term));
+  });
+  renderTable(filtered);
+}
+
+// Rows per page
+document.getElementById("rowsPerPage").addEventListener("change", function(){ currentPage=1; applySearch(); });
+
+// Print
+document.getElementById("printBtn").addEventListener("click", function(){
+  const w = window.open();
+  w.document.write('<html><head><title>Print JSON</title></head><body>'+document.getElementById("jsonContainer").innerHTML+'</body></html>');
+  w.document.close();
+  w.print();
+});
+
+// Export PDF
+document.getElementById("pdfBtn").addEventListener("click", function(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y=10;
+  jsonData.forEach((line,index)=>{
+    if(index>0 && index%50===0) doc.addPage(), y=10;
+    let keyText = line.key+": ";
+    let valText = line.value;
+    doc.setTextColor(139,69,19); // key brown
+    doc.text(keyText,10,y);
+    if(line.value===null) doc.setTextColor(255,0,0);
+    else if(typeof line.value==='boolean') doc.setTextColor(255,165,0);
+    else if(typeof line.value==='number') doc.setTextColor(0,0,255);
+    else doc.setTextColor(0,128,0);
+    doc.text(String(valText),10+doc.getTextWidth(keyText),y);
+    y+=7;
+  });
+  doc.save("json.pdf");
+});
+</script>
+</body>
+</html>

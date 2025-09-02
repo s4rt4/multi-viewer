@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Excel Viewer Final</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<style>
+body { font-family: Arial,sans-serif; margin:20px; background:#f5f5f5; color:#333; }
+h1 { text-align:center; margin-bottom:20px; }
+.upload-container { text-align:center; margin-bottom: 15px; }
+.custom-upload { display:inline-flex; align-items:center; gap:10px; background:#007bff; color:white; padding:12px 20px; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s; }
+.custom-upload:hover { background:#0056b3; transform: scale(1.05); }
+.custom-upload input { display:none; }
+#controls { text-align:center; margin-bottom:15px; }
+#controls button, #controls select { margin:5px; padding:6px 12px; border-radius:6px; border:none; background:#17a2b8; color:white; cursor:pointer; transition:0.2s; }
+#controls button:hover, #controls select:hover { background:#138496; }
+#searchBox { padding:6px; width:200px; margin-right:10px; border-radius:4px; border:1px solid #ccc; }
+#tableContainer { background:white; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); max-width:1000px; margin:auto; overflow:auto; }
+table { border-collapse: collapse; width:100%; }
+th, td { border:1px solid #ccc; padding:8px; text-align:left; cursor:pointer; }
+th { background:#007bff; color:white; }
+.pagination { text-align:center; margin-top:10px; }
+.pagination button { margin:0 3px; padding:4px 8px; border:none; border-radius:4px; cursor:pointer; background:#17a2b8; color:white; }
+.pagination button.active { background:#138496; }
+</style>
+</head>
+<body>
+<h1>Excel Viewer</h1>
+
+<div class="upload-container">
+<label class="custom-upload"><i class="fas fa-upload"></i> Choose Excel File
+<input type="file" id="fileInput" accept=".xlsx,.xls"></label>
+</div>
+
+<div id="controls">
+<input type="text" id="searchBox" placeholder="Search">
+<button id="searchBtn">Search</button>
+<button id="printBtn">Print</button>
+<button id="pdfBtn">Export PDF</button>
+<select id="rowsPerPage">
+  <option value="20">20 rows/page</option>
+  <option value="50">50 rows/page</option>
+  <option value="100">100 rows/page</option>
+  <option value="200">200 rows/page</option>
+  <option value="500">500 rows/page</option>
+</select>
+<select id="sheetSelect"></select>
+</div>
+
+<div id="tableContainer">Upload an Excel file to see data here.</div>
+<div class="pagination" id="pagination"></div>
+
+<script>
+let excelData = [];
+let currentPage = 1;
+let rowsPerPage = 20;
+let currentSheet = "";
+let sheetsList = [];
+
+// Load Excel
+document.getElementById("fileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const data = new Uint8Array(ev.target.result);
+    const workbook = XLSX.read(data,{type:'array'});
+    sheetsList = workbook.SheetNames;
+    const sheetSelect = document.getElementById("sheetSelect");
+    sheetSelect.innerHTML="";
+    sheetsList.forEach(name=>{
+      const option = document.createElement("option");
+      option.value = name; option.textContent=name;
+      sheetSelect.appendChild(option);
+    });
+    sheetSelect.onchange = function(){ currentSheet = this.value; currentPage=1; loadSheet(workbook); };
+    currentSheet = sheetsList[0];
+    currentPage=1;
+    loadSheet(workbook);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function loadSheet(workbook){
+  const worksheet = workbook.Sheets[currentSheet];
+  excelData = XLSX.utils.sheet_to_json(worksheet,{defval:""});
+  renderTable();
+}
+
+function renderTable(){
+  rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+  const start = (currentPage-1)*rowsPerPage;
+  const end = start+rowsPerPage;
+  const pageData = excelData.slice(start,end);
+  if(pageData.length===0){ document.getElementById("tableContainer").innerHTML="No data"; return; }
+  let html="<table><thead><tr>";
+  Object.keys(pageData[0]).forEach(k=>{ html+="<th onclick='sortTable(\""+k+"\")'>"+k+"</th>"; });
+  html+="</tr></thead><tbody>";
+  pageData.forEach(row=>{
+    html+="<tr>";
+    Object.values(row).forEach(v=>{ html+="<td>"+v+"</td>"; });
+    html+="</tr>";
+  });
+  html+="</tbody></table>";
+  document.getElementById("tableContainer").innerHTML = html;
+  renderPagination();
+}
+
+function renderPagination(){
+  const totalPages = Math.ceil(excelData.length/rowsPerPage);
+  let html="";
+  for(let i=1;i<=totalPages;i++){
+    html+=`<button class="${i===currentPage?'active':''}" onclick="gotoPage(${i})">${i}</button>`;
+  }
+  document.getElementById("pagination").innerHTML=html;
+}
+
+function gotoPage(page){ currentPage=page; renderTable(); }
+
+// Search filter: hanya tampilkan baris yang cocok
+document.getElementById("searchBtn").addEventListener("click", function(){
+  const term = document.getElementById("searchBox").value.trim().toLowerCase();
+  if(!term){ currentPage=1; renderTable(); return; }
+  const filtered = excelData.filter(row=>{
+    return Object.values(row).some(val => String(val).toLowerCase().includes(term));
+  });
+  currentPage=1;
+  renderFilteredTable(filtered);
+});
+
+function renderFilteredTable(filteredData){
+  rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+  const start = (currentPage-1)*rowsPerPage;
+  const end = start+rowsPerPage;
+  const pageData = filteredData.slice(start,end);
+  if(pageData.length===0){ document.getElementById("tableContainer").innerHTML="No data"; return; }
+  let html="<table><thead><tr>";
+  Object.keys(pageData[0]).forEach(k=>{ html+="<th>"+k+"</th>"; });
+  html+="</tr></thead><tbody>";
+  pageData.forEach(row=>{
+    html+="<tr>";
+    Object.values(row).forEach(v=>{ html+="<td>"+v+"</td>"; });
+    html+="</tr>";
+  });
+  html+="</tbody></table>";
+  document.getElementById("tableContainer").innerHTML = html;
+  // pagination untuk filtered data
+  const totalPages = Math.ceil(filteredData.length/rowsPerPage);
+  let htmlPag="";
+  for(let i=1;i<=totalPages;i++){
+    htmlPag+=`<button class="${i===currentPage?'active':''}" onclick="gotoPageFiltered(${i}, filteredData)">${i}</button>`;
+  }
+  document.getElementById("pagination").innerHTML=htmlPag;
+}
+
+function gotoPageFiltered(page, filteredData){ currentPage=page; renderFilteredTable(filteredData); }
+
+// Sorting
+function sortTable(key){
+  excelData.sort((a,b)=>{
+    if(a[key]<b[key]) return -1;
+    if(a[key]>b[key]) return 1;
+    return 0;
+  });
+  currentPage=1;
+  renderTable();
+}
+
+// Rows per page change
+document.getElementById("rowsPerPage").addEventListener("change", function(){ currentPage=1; renderTable(); });
+
+// Print
+document.getElementById("printBtn").addEventListener("click", function(){
+  const w = window.open();
+  w.document.write('<html><head><title>Print</title></head><body>'+document.getElementById("tableContainer").innerHTML+'</body></html>');
+  w.document.close();
+  w.print();
+});
+
+// Export PDF menggunakan jsPDF autoTable (file lebih kecil)
+document.getElementById("pdfBtn").addEventListener("click", function(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  if(excelData.length===0) return alert("No data to export");
+  const columns = Object.keys(excelData[0]).map(k=>({header:k, dataKey:k}));
+  doc.autoTable({ columns:columns, body: excelData, startY:10, styles:{fontSize:8} });
+  doc.save("excel.pdf");
+});
+</script>
+</body>
+</html>
