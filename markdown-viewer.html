@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
 body { font-family: Arial,sans-serif; margin:20px; background:#f5f5f5; color:#333; }
 h1 { text-align:center; margin-bottom:20px; }
@@ -22,6 +23,12 @@ h1 { text-align:center; margin-bottom:20px; }
 pre code { display:block; background:#2d2d2d; color:#f8f8f2; padding:12px; border-radius:6px; overflow-x:auto; font-family:"Courier New", monospace; font-size:14px; }
 code { background:#eee; padding:2px 5px; border-radius:4px; font-family:"Courier New", monospace; }
 .highlight { background: yellow; }
+/* Dark Mode untuk Markdown Viewer */
+body.dark { background:#1e1e1e; color:#f5f5f5; }
+body.dark #preview { background:#2b2b2b; box-shadow:0 2px 6px rgba(0,0,0,0.6); }
+body.dark code { background:#3a3a3a; color: #f5f5f5; }
+body.dark .highlight { background: #b8860b; color: #1e1e1e; }
+body.dark #searchBox { background-color: #333; border-color: #555; color: #f5f5f5; }
 </style>
 </head>
 <body>
@@ -101,7 +108,7 @@ document.getElementById("odtBtn").addEventListener("click", function(){
   saveAs(blob,"markdown.odt");
 });
 </script>
-<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </body>
 </html>

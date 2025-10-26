@@ -2,118 +2,325 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Viewer Dashboard</title>
-<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<title>Multi-Viewer Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
 :root {
+  --primary: #007bff;
+  --primary-dark: #0056b3;
+  --secondary: #e6eef9; /* Warna glider dari contoh Anda */
+  
   --bg-color: #f5f5f5;
+  --bg-color-darker: #e0e0e0;
   --card-bg: white;
   --text-color: #333;
-  --primary: #007bff;
-  --card-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  --border-color: #ccc;
+  
+  --shadow-color: rgba(0, 123, 255, 0.15);
 }
-body {
-  font-family: Arial,sans-serif;
-  background: var(--bg-color);
-  color: var(--text-color);
-  margin:0;
-  padding:0;
-  transition: background 0.3s, color 0.3s;
-}
-h1 { text-align:center; padding:20px 0; }
-.toggle-theme { position: fixed; top: 20px; right: 20px; padding:10px 15px; border:none; border-radius:6px; background:var(--primary); color:white; cursor:pointer; transition:0.3s; }
-.toggle-theme:hover { background:#0056b3; }
-.dashboard {
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap:20px;
-  max-width:1200px;
-  margin:auto;
-  padding:20px;
-}
-.card {
-  background: var(--card-bg);
-  border-radius:12px;
-  padding:30px 20px;
-  text-align:center;
-  box-shadow: var(--card-shadow);
-  transition: transform 0.3s, box-shadow 0.3s;
-  cursor:pointer;
-  text-decoration:none;
-  color: inherit;
-  position: relative;
-}
-.card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-}
-.card i { font-size:48px; margin-bottom:15px; color: var(--primary); transition: transform 0.3s; }
-.card:hover i { transform: scale(1.2); }
-.card h3 { margin:10px 0 0 0; font-size:18px; }
-.tooltip {
-  position: absolute;
-  bottom: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding:5px 10px;
-  border-radius:6px;
-  font-size:12px;
-  opacity:0;
-  pointer-events:none;
-  transition: opacity 0.3s;
-  white-space: nowrap;
-}
-.card:hover .tooltip { opacity:1; }
-.dark {
+
+/* Pengaturan Dark Mode */
+body.dark {
+  --primary: #4da6ff;
+  --primary-dark: #007bff;
+  --secondary: #2b2b2b; /* Glider versi gelap */
+
   --bg-color: #1e1e1e;
+  --bg-color-darker: #111;
   --card-bg: #2b2b2b;
   --text-color: #f5f5f5;
-  --primary: #4da6ff;
-  --card-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  --border-color: #444;
+  
+  --shadow-color: rgba(0, 0, 0, 0.6);
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 5px var(--shadow-color);
+  z-index: 10;
+}
+
+h1 { margin: 0; font-size: 24px; }
+
+.toggle-theme {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 14px;
+}
+.toggle-theme:hover { background: var(--primary-dark); }
+
+/* --- Gaya Tab Baru --- */
+.tab-container {
+  display: flex;
+  position: relative; /* Penting untuk glider */
+  align-items: center;
+  justify-content: flex-start; /* Mulai dari kiri */
+  background-color: var(--card-bg);
+  box-shadow: 0 0 1px 0 var(--shadow-color), 0 6px 12px 0 var(--shadow-color);
+  padding: 0.75rem;
+  border-radius: 99px;
+  margin: 20px auto; /* Buat tab di tengah */
+  width: fit-content; /* Lebar pas dengan konten */
+}
+
+/* Sembunyikan radio button aslinya */
+.tab-container input[type="radio"] {
+  display: none;
+}
+
+/* Gaya untuk label (tombol tab kita) */
+.tab-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  /* Hapus lebar tetap agar dinamis */
+  padding: 0 25px; /* Beri padding horizontal */
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: color 0.15s ease-in;
+  color: var(--text-color);
+  z-index: 2; /* Di atas glider */
+  white-space: nowrap; /* Agar tidak terpotong */
+}
+
+.tab-link i {
+  margin-right: 8px;
+}
+
+
+
+/* Saat radio button di-check (tab aktif) */
+.tab-container input[type="radio"]:checked + .tab-link {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+
+/* Gaya Glider (yang meluncur) */
+.glider {
+  position: absolute;
+  display: flex;
+  height: 54px;
+  /* Lebar akan diatur oleh JS */
+  background-color: var(--secondary);
+  z-index: 1; /* Di bawah teks tab */
+  border-radius: 99px;
+  transition: 0.25s ease-out; /* Animasi meluncur */
+}
+body.dark .glider {
+  background-color: #333; /* Warna glider di dark mode */
+}
+
+/* --- Akhir Gaya Tab Baru --- */
+
+/* Kontainer Konten (Tempat Iframe) */
+.content-container {
+  flex-grow: 1; /* Mengisi sisa ruang */
+  position: relative;
+  background: var(--bg-color);
+}
+
+iframe.viewer-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: none;
+}
+
+iframe.viewer-frame.active {
+  display: block;
 }
 </style>
 </head>
 <body>
 
-<button class="toggle-theme">Toggle Dark Mode</button>
+<div class="header-bar">
+  <h1>📂 Multi-Viewer</h1>
+  <button class="toggle-theme">Toggle Dark Mode</button>
+</div>
 
-<h1>📂 Viewer Dashboard</h1>
-<div class="dashboard">
-  <a class="card" href="csv-viewer.html" target="_blank">
-    <i class="fas fa-file-csv"></i>
-    <h3>CSV Viewer</h3>
-    <div class="tooltip">View CSV files neatly</div>
-  </a>
-  <a class="card" href="json-viewer.html" target="_blank">
-    <i class="fas fa-code"></i>
-    <h3>JSON Viewer</h3>
-    <div class="tooltip">View JSON with search & copy</div>
-  </a>
-  <a class="card" href="markdown-viewer.html" target="_blank">
-    <i class="fas fa-file-alt"></i>
-    <h3>Markdown Viewer</h3>
-    <div class="tooltip">Render Markdown files</div>
-  </a>
-  <a class="card" href="log-viewer.html" target="_blank">
-    <i class="fas fa-file-signature"></i>
-    <h3>Log Viewer</h3>
-    <div class="tooltip">View logs with search & highlight</div>
-  </a>
-  <a class="card" href="excel-viewer.html" target="_blank">
-    <i class="fas fa-file-excel"></i>
-    <h3>Excel Viewer</h3>
-    <div class="tooltip">View Excel files with pagination</div>
-  </a>
+<div class="tab-container">
+  
+  <input type="radio" id="radio-1" name="tabs" checked onclick="openViewer(event, 'csv')"/>
+  <label class="tab-link" for="radio-1">
+    <i class="fas fa-file-csv"></i> CSV Viewer
+   
+  </label>
+  
+  <input type="radio" id="radio-2" name="tabs" onclick="openViewer(event, 'json')"/>
+  <label class="tab-link" for="radio-2">
+    <i class="fas fa-code"></i> JSON Viewer
+  </label>
+  
+  <input type="radio" id="radio-3" name="tabs" onclick="openViewer(event, 'log')"/>
+  <label class="tab-link" for="radio-3">
+    <i class="fas fa-file-signature"></i> Log Viewer
+  </label>
+  
+  <input type="radio" id="radio-4" name="tabs" onclick="openViewer(event, 'excel')"/>
+  <label class="tab-link" for="radio-4">
+    <i class="fas fa-file-excel"></i> Excel Viewer
+  </label>
+  
+  <input type="radio" id="radio-5" name="tabs" onclick="openViewer(event, 'markdown')"/>
+  <label class="tab-link" for="radio-5">
+    <i class="fas fa-file-alt"></i> Markdown Viewer
+  </label>
+
+  <span class="glider"></span>
+</div>
+
+<div class="content-container">
+  <iframe id="csv-frame" class="viewer-frame active" src="csv-viewer.html"></iframe>
+  <iframe id="json-frame" class="viewer-frame" src="json-viewer.html"></iframe>
+  <iframe id="log-frame" class="viewer-frame" src="log-viewer.html"></iframe>
+  <iframe id="excel-frame" class="viewer-frame" src="excel-viewer.html"></iframe>
+  <iframe id="markdown-frame" class="viewer-frame" src="markdown-viewer.html"></iframe>
 </div>
 
 <script>
-// Toggle dark mode
+// Skrip untuk Dark Mode (Diperbarui)
 const toggleBtn = document.querySelector('.toggle-theme');
 toggleBtn.addEventListener('click', () => {
   document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  
+  // Sinkronkan dark mode ke semua iframe
+  document.querySelectorAll('iframe.viewer-frame').forEach(frame => {
+    try {
+      const frameBody = frame.contentWindow.document.body;
+      if (isDark) {
+        frameBody.classList.add('dark');
+      } else {
+        frameBody.classList.remove('dark');
+      }
+    } catch (e) {
+      console.error("Tidak bisa akses iframe: ", e);
+    }
+  });
+  
+  // Perbarui posisi glider setelah tema berubah
+  // (karena DOM mungkin sedikit bergeser)
+  setTimeout(() => {
+    moveGlider(document.querySelector('.tab-link[for="' + document.querySelector('.tab-container input:checked').id + '"]'));
+  }, 100);
 });
+
+/**
+ * Fungsi BARU untuk memindahkan glider
+ * @param {HTMLElement} targetTab - Elemen <label> yang diklik
+ */
+function moveGlider(targetTab) {
+  const glider = document.querySelector('.glider');
+  const tabContainer = document.querySelector('.tab-container');
+  
+  if (targetTab && glider) {
+    // Hitung offset kiri relatif terhadap kontainer tab
+    let offsetLeft = targetTab.offsetLeft;
+    // Sesuaikan dengan padding kontainer
+    let containerPaddingLeft = parseFloat(window.getComputedStyle(tabContainer).paddingLeft);
+
+    glider.style.width = `${targetTab.offsetWidth}px`;
+    glider.style.transform = `translateX(${offsetLeft - containerPaddingLeft}px)`;
+  }
+}
+
+/**
+ * Fungsi openViewer (Diperbarui)
+ * Mengelola Iframe dan memanggil moveGlider
+ */
+function openViewer(event, viewerName) {
+  // 1. Sembunyikan semua iframe
+  document.querySelectorAll('.viewer-frame').forEach(frame => {
+    frame.classList.remove('active');
+  });
+
+  // 2. Tampilkan iframe yang benar
+  const activeFrame = document.getElementById(viewerName + "-frame");
+  if (activeFrame) {
+    activeFrame.classList.add("active");
+  }
+
+  // 3. Pindahkan Glider ke tab yang diklik
+  // Kita perlu target <label>-nya, bukan <input>-nya
+  let targetLabel;
+  if (event.currentTarget.tagName === 'INPUT') {
+      targetLabel = document.querySelector('label[for="' + event.currentTarget.id + '"]');
+  } else {
+      targetLabel = event.currentTarget; // Jika kliknya sudah di label
+  }
+  moveGlider(targetLabel);
+
+  // 4. Sinkronkan Dark Mode (untuk iframe yang baru dimuat)
+  setTimeout(() => {
+    try {
+      const isDark = document.body.classList.contains('dark');
+      const frameBody = activeFrame.contentWindow.document.body;
+      if (isDark) {
+        frameBody.classList.add('dark');
+      } else {
+        frameBody.classList.remove('dark');
+      }
+    } catch (e) {
+      // Biarkan jika gagal, mungkin iframe belum siap
+    }
+  }, 100);
+}
+
+// Event Listener untuk memposisikan Glider saat halaman dimuat & di-resize
+document.addEventListener('DOMContentLoaded', () => {
+  // Temukan tab yang aktif saat memuat
+  const checkedInput = document.querySelector('.tab-container input:checked');
+  if (checkedInput) {
+    const activeLabel = document.querySelector('label[for="' + checkedInput.id + '"]');
+    // Pindahkan glider ke sana tanpa animasi
+    const glider = document.querySelector('.glider');
+    glider.style.transition = 'none'; // Matikan animasi
+    moveGlider(activeLabel);
+    // Nyalakan animasi kembali setelah sepersekian detik
+    setTimeout(() => {
+      glider.style.transition = '0.25s ease-out';
+    }, 50);
+  }
+});
+
+window.addEventListener('resize', () => {
+  // Posisikan ulang glider saat ukuran jendela berubah
+  const checkedInput = document.querySelector('.tab-container input:checked');
+  if (checkedInput) {
+    const activeLabel = document.querySelector('label[for="' + checkedInput.id + '"]');
+    moveGlider(activeLabel);
+  }
+});
+
 </script>
 
 </body>
